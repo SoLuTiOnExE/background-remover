@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BG Eraser v1.2 — Dr. Solution Tech</title>
+  <link rel="icon" type="image/png" href="favicon.svg" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="nav-logo" href="#">
+      <div class="logo-icon">✂</div>
+      BG<span class="ac">Eraser</span>
+    </a>
+    <div class="nav-right">
+      <button class="btn-sm" onclick="openDev()">👨‍💻 Developer</button>
+    </div>
+  </nav>
+
+  <!-- MODEL BANNER -->
+  <div class="model-banner" id="model-banner">
+    <div class="dot" id="model-dot"></div>
+    <span id="model-msg">Loading AI model — first visit downloads ~5MB once, then it's cached forever…</span>
+    <div class="model-bar-wrap">
+      <div class="model-bar-fill" id="model-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-badge">✨ v1.2 · 100% Browser-Based · No Install · No Server</div>
+    <h1>Remove Backgrounds<br><span>Instantly.</span></h1>
+    <p>AI-powered background removal that runs entirely in your browser. Single or batch — download as PNG or ZIP.</p>
+    <div class="tagline-pills">
+      <span class="pill">🔒 Private — images never leave your device</span>
+      <span class="pill">⚡ WASM-powered AI</span>
+      <span class="pill">📦 GitHub Pages ready</span>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-wrapper">
+
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('single',this)">🖼 Single Image</button>
+      <button class="tab-btn" onclick="switchTab('batch',this)">📦 Batch Process</button>
+    </div>
+
+    <!-- ══════════════════════════════ SINGLE ══ -->
+    <div id="tab-single" class="tab-panel active">
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="drop-zone" id="s-drop" ondragover="dov(event,'s-drop')" ondragleave="dlv(event,'s-drop')"
+          ondrop="ddr(event,'single')">
+          <input type="file" id="s-file" accept="image/*" onchange="setSingle(event.target.files[0])">
+          <span class="drop-icon">🖼</span>
+          <h3 id="s-dz-h">Drop your image here</h3>
+          <p id="s-dz-p">or <span class="al">click to browse</span> · PNG · JPG · WEBP</p>
+        </div>
+      </div>
+
+      <!-- BG OPTIONS -->
+      <div class="card">
+        <div class="card-title"><span class="ic">🎨</span> Background Replacement</div>
+        <div class="bg-options">
+          <div>
+            <div class="bg-option-label">Solid colour</div>
+            <div class="color-wrap">
+              <input type="color" id="s-cpick" value="#ffffff" oninput="cpick('s')">
+              <input type="text" id="s-ctxt" placeholder="e.g. #ff0000 or transparent" oninput="ctxt('s')">
+            </div>
+            <div class="presets" id="s-presets">
+              <div class="pdot" style="background:#ffffff;" title="White" onclick="preset('s','#ffffff',this)"></div>
+              <div class="pdot" style="background:#000000;border-color:#333;" title="Black"
+                onclick="preset('s','#000000',this)"></div>
+              <div class="pdot" style="background:#FF6B2C;" onclick="preset('s','#FF6B2C',this)"></div>
+              <div class="pdot" style="background:#22C55E;" onclick="preset('s','#22C55E',this)"></div>
+              <div class="pdot" style="background:#3B82F6;" onclick="preset('s','#3B82F6',this)"></div>
+              <div class="pdot" style="background:#A855F7;" onclick="preset('s','#A855F7',this)"></div>
+              <div class="pdot" style="background:#F5C842;" onclick="preset('s','#F5C842',this)"></div>
+              <div class="pdot" style="background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/8px 8px;"
+                title="Transparent" onclick="preset('s','transparent',this)"></div>
+            </div>
+            <button class="clr-btn" onclick="clearCol('s')">✕ Clear (keep transparent)</button>
+          </div>
+          <div>
+            <div class="bg-option-label">Background image</div>
+            <div class="bg-img-drop" id="s-bgdrop" ondragover="dov(event,'s-bgdrop')"
+              ondragleave="dlv(event,'s-bgdrop')" ondrop="ddrBg(event,'s')">
+              <input type="file" id="s-bgfile" accept="image/*" onchange="setBgImg('s',event.target.files[0])">
+              <p id="s-bglbl">🖼 Drop or click for background image</p>
+            </div>
+            <button class="clr-btn" id="s-bgclr" style="display:none;" onclick="clearBgImg('s')">✕ Remove background
+              image</button>
+            <div class="opacity-row" id="s-oprow" style="display:none;">
+              <label>Opacity</label>
+              <input type="range" id="s-opacity" min="10" max="100" value="100"
+                oninput="s_opVal.textContent=this.value+'%'">
+              <span class="opacity-val" id="s-opVal">100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="s-btn" onclick="runSingle()" disabled>
+        <span class="btn-label">✂ Remove Background</span>
+        <div class="spin"></div>
+      </button>
+
+      <!-- PREVIEW -->
+      <div class="preview-wrap" id="s-preview">
+        <div class="card-title" style="margin-bottom:14px;"><span class="ic">👁</span> Before &amp; After</div>
+        <div class="preview-grid">
+          <div class="pcard">
+            <div class="pcard-head">
+              <h4>Original</h4><span class="badge b-before">BEFORE</span>
+            </div>
+            <div class="img-wrap"><img id="s-before" src="" alt="Before"></div>
+          </div>
+          <div class="pcard">
+            <div class="pcard-head">
+              <h4>Result</h4><span class="badge b-after">AFTER</span>
+            </div>
+            <div class="img-wrap"><img id="s-after" src="" alt="After"></div>
+            <a id="s-dl" href="#" download="nobg.png" class="dl-btn">⬇ Download PNG</a>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /single -->
+
+    <!-- ══════════════════════════════ BATCH ══ -->
+    <div id="tab-batch" class="tab-panel">
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <div class="drop-zone" id="b-drop" ondragover="dov(event,'b-drop')" ondragleave="dlv(event,'b-drop')"
+          ondrop="ddr(event,'batch')">
+          <input type="file" id="b-files" accept="image/*" multiple onchange="addBatch(Array.from(event.target.files))">
+          <span class="drop-icon">📦</span>
+          <h3>Drop multiple images here</h3>
+          <p>or <span class="al">click to select</span> · unlimited images</p>
+        </div>
+      </div>
+
+      <div class="batch-count-bar" id="b-countbar">
+        <span id="b-countlbl">0 images selected</span>
+        <button class="clr-all" onclick="clearBatch()">✕ Clear all</button>
+      </div>
+
+      <div class="batch-grid" id="b-grid"></div>
+
+      <!-- BG OPTIONS BATCH -->
+      <div class="card">
+        <div class="card-title"><span class="ic">🎨</span> Background Replacement (all images)</div>
+        <div class="bg-options">
+          <div>
+            <div class="bg-option-label">Solid colour</div>
+            <div class="color-wrap">
+              <input type="color" id="b-cpick" value="#ffffff" oninput="cpick('b')">
+              <input type="text" id="b-ctxt" placeholder="e.g. #ff0000 or transparent" oninput="ctxt('b')">
+            </div>
+            <div class="presets" id="b-presets">
+              <div class="pdot" style="background:#ffffff;" onclick="preset('b','#ffffff',this)"></div>
+              <div class="pdot" style="background:#000000;border-color:#333;" onclick="preset('b','#000000',this)">
+              </div>
+              <div class="pdot" style="background:#FF6B2C;" onclick="preset('b','#FF6B2C',this)"></div>
+              <div class="pdot" style="background:#22C55E;" onclick="preset('b','#22C55E',this)"></div>
+              <div class="pdot" style="background:#3B82F6;" onclick="preset('b','#3B82F6',this)"></div>
+              <div class="pdot" style="background:#A855F7;" onclick="preset('b','#A855F7',this)"></div>
+              <div class="pdot" style="background:#F5C842;" onclick="preset('b','#F5C842',this)"></div>
+              <div class="pdot" style="background:repeating-conic-gradient(#ccc 0% 25%,#fff 0% 50%) 0 0/8px 8px;"
+                onclick="preset('b','transparent',this)"></div>
+            </div>
+            <button class="clr-btn" onclick="clearCol('b')">✕ Clear (keep transparent)</button>
+          </div>
+          <div>
+            <div class="bg-option-label">Background image</div>
+            <div class="bg-img-drop" id="b-bgdrop" ondragover="dov(event,'b-bgdrop')"
+              ondragleave="dlv(event,'b-bgdrop')" ondrop="ddrBg(event,'b')">
+              <input type="file" id="b-bgfile" accept="image/*" onchange="setBgImg('b',event.target.files[0])">
+              <p id="b-bglbl">🖼 Drop or click for background image</p>
+            </div>
+            <button class="clr-btn" id="b-bgclr" style="display:none;" onclick="clearBgImg('b')">✕ Remove background
+              image</button>
+            <div class="opacity-row" id="b-oprow" style="display:none;">
+              <label>Opacity</label>
+              <input type="range" id="b-opacity" min="10" max="100" value="100"
+                oninput="b_opVal.textContent=this.value+'%'">
+              <span class="opacity-val" id="b-opVal">100%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="b-btn" onclick="runBatch()" disabled>
+        <span class="btn-label">✂ Remove Backgrounds</span>
+        <div class="spin"></div>
+      </button>
+
+      <div class="process-progress" id="b-prog">
+        <div class="pp-top">
+          <span class="pp-label" id="b-proglbl">Processing…</span>
+          <span class="pp-count" id="b-progcnt">0 / 0</span>
+        </div>
+        <div class="pp-track">
+          <div class="pp-fill" id="b-progbar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <button class="btn-zip" id="b-zip" onclick="dlZip()">📥 Download All as ZIP</button>
+
+      <div class="batch-results" id="b-results">
+        <h3>📋 Results — Before &amp; After</h3>
+        <div id="b-rlist"></div>
+      </div>
+
+    </div><!-- /batch -->
+
+  </div><!-- /tabs-wrapper -->
+
+  <div class="toasts" id="toasts"></div>
+
+  <!-- DEV MODAL -->
+  <div class="modal-ov" id="dev-modal" onclick="if(event.target===this)closeDev()">
+    <div class="modal">
+      <div class="modal-head">
+        <h2>👨‍💻 Developer Profile</h2>
+        <button class="mcls" onclick="closeDev()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="dev-av">S</div>
+        <div class="dev-name">Fasanya Ayomide Joshua</div>
+        <div class="dev-org">🏢 Dr. Solution Tech</div>
+        <div class="dev-role">Web Developer · Software Engineer<br>Entrepreneur · Tech Retailer (Akure &amp; Abeokuta)
+        </div>
+        <div class="dev-links">
+          <a class="dlink" href="https://github.com/SoLuTiOnExE" target="_blank">
+            <div class="lic ic-gh">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+              </svg>
+            </div>
+            <div class="ld">
+              <div class="ll">GitHub</div>
+              <div class="lv">github.com/SoLuTiOnExE</div>
+            </div>
+          </a>
+          <a class="dlink" href="https://wa.me/2348120729938" target="_blank">
+            <div class="lic ic-wa">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#25D366">
+                <path
+                  d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+              </svg>
+            </div>
+            <div class="ld">
+              <div class="ll">WhatsApp</div>
+              <div class="lv">+234 812 072 9938</div>
+            </div>
+          </a>
+          <a class="dlink" href="tel:+2347041626944">
+            <div class="lic ic-ph">📞</div>
+            <div class="ld">
+              <div class="ll">Call</div>
+              <div class="lv">+234 704 162 6944</div>
+            </div>
+          </a>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <p>Built with ❤ by <span>Dr. Solution Tech</span> · BG Eraser v1.2</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════ -->
+
+  <!-- JSZip for batch ZIP download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+  <!-- @imgly/background-removal — runs WASM U2Net in browser, no server needed
+     NOTE: pinned to 1.7.0 (not 1.4.5) — 1.4.5 has a known bug where it imports
+     `memoize` as a named export from `lodash` (a CJS package), which the
+     jsdelivr +esm shim cannot provide, causing:
+     "Uncaught SyntaxError: ... doesn't provide an export named: 'memoize'"
+     This was fixed upstream in imgly/background-removal-js PR #150
+     (switched to importing memoize from lodash-es). 1.7.0 includes the fix. -->
+  <script type="module">
+    import {removeBackground} from 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm';
+
+    // ─── MODEL LOADING ───────────────────────────────
+    const banner = document.getElementById('model-banner');
+    const modelMsg = document.getElementById('model-msg');
+    const modelBar = document.getElementById('model-bar');
+    const modelDot = document.getElementById('model-dot');
+
+    let bgRemove = null;  // will hold the bound function after warmup
+
+    const config = {
+      progress: (key, current, total) => {
+        const pct = total > 0 ? Math.round(current / total * 100) : 0;
+        modelBar.style.width = pct + '%';
+        modelMsg.textContent = `Loading AI model… ${pct}% (cached after first visit)`;
+      }
+    };
+
+    // Warm up the model immediately on page load
+    (async () => {
+      try {
+        // A tiny 1×1 transparent PNG to trigger model download without user action
+        const tiny = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJgcc==';
+        const resp = await fetch(tiny);
+        const blob = await resp.blob();
+        await removeBackground(blob, config);
+        // Model ready
+        bgRemove = (blob) => removeBackground(blob, {...config, progress: () => { }});
+        banner.classList.add('ready');
+        document.getElementById('model-dot').style.animation = 'none';
+        modelMsg.textContent = '✓ AI model ready — all processing happens in your browser';
+        modelBar.style.width = '100%';
+        setTimeout(() => banner.classList.add('hidden'), 3500);
+      } catch (e) {
+        modelMsg.textContent = '⚠ Model load issue — try refreshing. ' + e.message;
+      }
+    })();
+
+    // ─── STATE ───────────────────────────────────────
+    let singleFile = null;
+    let sBgImgFile = null;
+    let batchFiles = [];
+    let bBgImgFile = null;
+    let batchResults = [];   // [{name, dataUrl}]
+
+    // expose to inline handlers (module scope is isolated)
+    window._mod = {
+      async runSingle() {
+        if (!singleFile) return;
+        const btn = document.getElementById('s-btn');
+        btn.disabled = true; btn.classList.add('loading');
+
+        // show before
+        const beforeURL = URL.createObjectURL(singleFile);
+        document.getElementById('s-before').src = beforeURL;
+
+        try {
+          const resultBlob = await removeBackground(singleFile, config);
+          const finalBlob = await applyBg(resultBlob, 's');
+          const url = URL.createObjectURL(finalBlob);
+          document.getElementById('s-after').src = url;
+          const dl = document.getElementById('s-dl');
+          dl.href = url;
+          dl.download = stem(singleFile.name) + '_nobg.png';
+          document.getElementById('s-preview').classList.add('show');
+          toast('Background removed! ✓', 'ok');
+        } catch (e) {
+          toast('Error: ' + e.message, 'err');
+        } finally {
+          btn.disabled = false; btn.classList.remove('loading');
+        }
+      },
+
+      async runBatch() {
+        if (!batchFiles.length) return;
+        const btn = document.getElementById('b-btn');
+        btn.disabled = true; btn.classList.add('loading');
+
+        batchResults = [];
+        const prog = document.getElementById('b-prog');
+        const bar = document.getElementById('b-progbar');
+        const lbl = document.getElementById('b-proglbl');
+        const cnt = document.getElementById('b-progcnt');
+        prog.classList.add('show');
+        document.getElementById('b-results').classList.remove('show');
+        document.getElementById('b-rlist').innerHTML = '';
+        document.getElementById('b-zip').classList.remove('show');
+
+        const total = batchFiles.length;
+        for (let i = 0; i < total; i++) {
+          const file = batchFiles[i];
+          const item = document.getElementById('bi-' + i);
+          setStatus(item, 'working', '⏳ Working…');
+          lbl.textContent = `"${file.name}"`;
+          cnt.textContent = `${i + 1} / ${total}`;
+          bar.style.width = ((i + 1) / total * 100) + '%';
+
+          try {
+            const resultBlob = await removeBackground(file, config);
+            const finalBlob = await applyBg(resultBlob, 'b');
+            const url = URL.createObjectURL(finalBlob);
+
+            // update thumb
+            if (item) {
+              item.innerHTML = `<div class="result-ov"><img src="${url}" alt="done"></div><div class="st st-done">✓ Done</div>`;
+            }
+            batchResults.push({name: stem(file.name) + '_nobg.png', dataUrl: url, origUrl: URL.createObjectURL(file)});
+            appendBRow(file.name, URL.createObjectURL(file), url);
+            toast(`✓ ${file.name}`, 'ok');
+          } catch (e) {
+            setStatus(item, 'err', '✕ Error');
+            toast(`✕ ${file.name}: ${e.message}`, 'err');
+          }
+        }
+
+        lbl.textContent = `Done — ${batchResults.length}/${total} processed`;
+        btn.disabled = false; btn.classList.remove('loading');
+        if (batchResults.length) {
+          document.getElementById('b-results').classList.add('show');
+          document.getElementById('b-zip').classList.add('show');
+        }
+      },
+
+      async dlZip() {
+        if (!batchResults.length) return;
+        toast('Building ZIP…', 'inf');
+        const zip = new JSZip();
+        for (const item of batchResults) {
+          const res = await fetch(item.dataUrl);
+          const blob = await res.blob();
+          zip.file(item.name, blob);
+        }
+        const content = await zip.generateAsync({type: 'blob'});
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content);
+        a.download = 'removed_backgrounds.zip';
+        a.click();
+        toast('ZIP downloaded!', 'ok');
+      }
+    };
+
+    // ─── BG COMPOSITING (canvas-based, no server) ───
+    async function applyBg(resultBlob, pfx) {
+      const colorVal = document.getElementById(pfx + '-ctxt').value.trim();
+      const bgFile = pfx === 's' ? sBgImgFile : bBgImgFile;
+      const opacityEl = document.getElementById(pfx + '-opacity');
+      const opacity = opacityEl ? parseInt(opacityEl.value) / 100 : 1;
+
+      // If no colour and no bg image → return as-is (transparent PNG)
+      if (!colorVal && !bgFile) return resultBlob;
+      if (colorVal === 'transparent') return resultBlob;
+
+      const fgImg = await blobToImg(resultBlob);
+      const canvas = document.createElement('canvas');
+      canvas.width = fgImg.naturalWidth;
+      canvas.height = fgImg.naturalHeight;
+      const ctx = canvas.getContext('2d');
+
+      if (bgFile) {
+        const bgImg = await blobToImg(bgFile);
+        ctx.globalAlpha = opacity;
+        ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1;
+      } else if (colorVal) {
+        ctx.fillStyle = colorVal;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.drawImage(fgImg, 0, 0);
+      return new Promise(res => canvas.toBlob(res, 'image/png'));
+    }
+
+    function blobToImg(blobOrFile) {
+      return new Promise((res, rej) => {
+        const img = new Image();
+        img.onload = () => res(img);
+        img.onerror = rej;
+        img.src = URL.createObjectURL(blobOrFile);
+      });
+    }
+
+    // ─── BATCH RESULT ROW ────────────────────────────
+    function appendBRow(origName, origUrl, resultUrl) {
+      const list = document.getElementById('b-rlist');
+      const row = document.createElement('div');
+      row.className = 'brow';
+      const s = stem(origName);
+      row.innerHTML = `
+    <div class="bcols">
+      <div class="bcol">
+        <div class="col-lbl">Before — ${origName}</div>
+        <div class="bimg"><img src="${origUrl}" alt="orig"></div>
+      </div>
+      <div class="bcol">
+        <div class="col-lbl">After — Background Removed</div>
+        <div class="bimg"><img src="${resultUrl}" alt="result"></div>
+      </div>
+    </div>
+    <div class="brow-actions">
+      <a class="bdl" href="${resultUrl}" download="${s}_nobg.png">⬇ Download</a>
+    </div>`;
+      list.appendChild(row);
+    }
+
+    // ─── HELPERS ─────────────────────────────────────
+    function stem(name) {return name.replace(/\.[^.]+$/, '');}
+
+    function setStatus(item, type, txt) {
+      if (!item) return;
+      const st = item.querySelector('.st');
+      if (st) {st.className = 'st st-' + type; st.textContent = txt;}
+    }
+
+    // Expose internal state setters so non-module handlers can reach them
+    window._modState = {
+      setSingleFile(f) {singleFile = f;},
+      setSBgImg(f) {sBgImgFile = f;},
+      clearSBgImg() {sBgImgFile = null;},
+      getBatchFiles() {return batchFiles;},
+      addBatchFiles(files) {
+        files.forEach(f => {if (!batchFiles.find(b => b.name === f.name && b.size === f.size)) batchFiles.push(f);});
+      },
+      removeBatchFile(i) {batchFiles.splice(i, 1);},
+      clearBatchFiles() {batchFiles = []; batchResults = [];},
+      setBBgImg(f) {bBgImgFile = f;},
+      clearBBgImg() {bBgImgFile = null;},
+    };
+  </script>
+
+  <script>
+    // ══════════════════════════════════════
+    //  NON-MODULE GLUE  (classic script)
+    // ══════════════════════════════════════
+
+    function runSingle() {window._mod.runSingle();}
+    function runBatch() {window._mod.runBatch();}
+    function dlZip() {window._mod.dlZip();}
+
+    // ── TABS ──
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    // ── DRAG/DROP ──
+    function dov(e, id) {e.preventDefault(); document.getElementById(id).classList.add('drag-over');}
+    function dlv(e, id) {document.getElementById(id).classList.remove('drag-over');}
+
+    function ddr(e, tab) {
+      e.preventDefault();
+      dlv(e, tab === 'single' ? 's-drop' : 'b-drop');
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      if (!files.length) return toast('No image files detected', 'err');
+      if (tab === 'single') setSingle(files[0]);
+      else addBatch(files);
+    }
+
+    function ddrBg(e, pfx) {
+      e.preventDefault();
+      dlv(e, pfx + '-bgdrop');
+      const f = Array.from(e.dataTransfer.files).find(f => f.type.startsWith('image/'));
+      if (f) setBgImg(pfx, f);
+    }
+
+    // ── SINGLE FILE ──
+    function setSingle(file) {
+      window._modState.setSingleFile(file);
+      document.getElementById('s-btn').disabled = false;
+      const dz = document.getElementById('s-drop');
+      const rd = new FileReader();
+      rd.onload = ev => {
+        dz.style.cssText += `;background-image:url(${ev.target.result});background-size:contain;background-repeat:no-repeat;background-position:center;`;
+        document.getElementById('s-dz-h').textContent = file.name;
+        document.getElementById('s-dz-p').textContent = (file.size / 1024).toFixed(1) + ' KB · Click to change';
+        dz.classList.add('has-file');
+      };
+      rd.readAsDataURL(file);
+      document.getElementById('s-preview').classList.remove('show');
+      toast('Image ready!', 'inf');
+    }
+
+    // ── BATCH FILES ──
+    function addBatch(files) {
+      window._modState.addBatchFiles(files);
+      renderBatchGrid();
+      const bf = window._modState.getBatchFiles();
+      document.getElementById('b-btn').disabled = bf.length === 0;
+      updateBatchCount();
+      toast(files.length + ' image(s) added', 'inf');
+    }
+
+    function renderBatchGrid() {
+      const bf = window._modState.getBatchFiles();
+      const grid = document.getElementById('b-grid');
+      grid.innerHTML = '';
+      bf.forEach((file, i) => {
+        const item = document.createElement('div');
+        item.className = 'bitem'; item.id = 'bi-' + i;
+        const rd = new FileReader();
+        rd.onload = ev => {
+          item.innerHTML = `
+        <img src="${ev.target.result}" alt="${file.name}">
+        <button class="xbtn" onclick="removeBItem(${i})">✕</button>
+        <div class="st st-pending">Pending</div>`;
+        };
+        rd.readAsDataURL(file);
+        grid.appendChild(item);
+      });
+    }
+
+    function removeBItem(i) {
+      window._modState.removeBatchFile(i);
+      renderBatchGrid();
+      updateBatchCount();
+      const bf = window._modState.getBatchFiles();
+      document.getElementById('b-btn').disabled = bf.length === 0;
+    }
+
+    function clearBatch() {
+      window._modState.clearBatchFiles();
+      document.getElementById('b-grid').innerHTML = '';
+      document.getElementById('b-rlist').innerHTML = '';
+      document.getElementById('b-results').classList.remove('show');
+      document.getElementById('b-zip').classList.remove('show');
+      document.getElementById('b-prog').classList.remove('show');
+      document.getElementById('b-btn').disabled = true;
+      updateBatchCount();
+    }
+
+    function updateBatchCount() {
+      const bf = window._modState.getBatchFiles();
+      const bar = document.getElementById('b-countbar');
+      if (bf.length > 0) {
+        bar.classList.add('show');
+        document.getElementById('b-countlbl').textContent = bf.length + ' image' + (bf.length > 1 ? 's' : '') + ' selected';
+      } else {
+        bar.classList.remove('show');
+      }
+    }
+
+    // ── COLOUR ──
+    function cpick(pfx) {
+      const v = document.getElementById(pfx + '-cpick').value;
+      document.getElementById(pfx + '-ctxt').value = v;
+    }
+    function ctxt(pfx) {
+      const v = document.getElementById(pfx + '-ctxt').value;
+      if (/^#[0-9a-f]{6}$/i.test(v)) document.getElementById(pfx + '-cpick').value = v;
+    }
+    function preset(pfx, color, el) {
+      document.querySelectorAll('#' + pfx + '-presets .pdot').forEach(d => d.classList.remove('on'));
+      el.classList.add('on');
+      document.getElementById(pfx + '-ctxt').value = color === 'transparent' ? 'transparent' : color;
+      if (color !== 'transparent') document.getElementById(pfx + '-cpick').value = color;
+    }
+    function clearCol(pfx) {
+      document.getElementById(pfx + '-ctxt').value = '';
+      document.getElementById(pfx + '-cpick').value = '#ffffff';
+      document.querySelectorAll('#' + pfx + '-presets .pdot').forEach(d => d.classList.remove('on'));
+    }
+
+    // ── BG IMAGE ──
+    function setBgImg(pfx, file) {
+      if (pfx === 's') window._modState.setSBgImg(file);
+      else window._modState.setBBgImg(file);
+      const rd = new FileReader();
+      rd.onload = ev => {
+        document.getElementById(pfx + '-bglbl').innerHTML =
+          `<img class="bg-thumb" src="${ev.target.result}"> ${file.name}`;
+        document.getElementById(pfx + '-bgclr').style.display = 'block';
+        document.getElementById(pfx + '-oprow').style.display = 'flex';
+      };
+      rd.readAsDataURL(file);
+      toast('Background image set!', 'inf');
+    }
+
+    function clearBgImg(pfx) {
+      if (pfx === 's') window._modState.clearSBgImg();
+      else window._modState.clearBBgImg();
+      document.getElementById(pfx + '-bglbl').innerHTML = '🖼 Drop or click for background image';
+      document.getElementById(pfx + '-bgclr').style.display = 'none';
+      document.getElementById(pfx + '-oprow').style.display = 'none';
+      document.getElementById(pfx + '-bgfile').value = '';
+    }
+
+    // ── TOAST ──
+    function toast(msg, type = 'inf') {
+      const c = document.getElementById('toasts');
+      const t = document.createElement('div');
+      t.className = 'toast ' + type;
+      const icons = {ok: '✓', err: '✕', inf: '●'};
+      t.innerHTML = `<span>${icons[type] || '●'}</span> ${msg}`;
+      c.appendChild(t);
+      setTimeout(() => {
+        t.style.cssText += ';opacity:0;transform:translateX(20px);transition:.3s;';
+        setTimeout(() => t.remove(), 320);
+      }, 3200);
+    }
+
+    // ── DEV MODAL ──
+    function openDev() {document.getElementById('dev-modal').classList.add('show');}
+    function closeDev() {document.getElementById('dev-modal').classList.remove('show');}
+    document.addEventListener('keydown', e => {if (e.key === 'Escape') closeDev();});
+  </script>
+</body>
+
+</html>
